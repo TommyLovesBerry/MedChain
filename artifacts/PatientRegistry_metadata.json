@@ -1,0 +1,45 @@
+{
+	"compiler": {
+		"version": "0.8.30+commit.73712a01"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/PatientRegistry.sol": "PatientRegistry"
+		},
+		"evmVersion": "prague",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/PatientRegistry.sol": {
+			"keccak256": "0x11c49dd47d24a9dcc64631e97e7a7b2e1090a080ae8ceffdc8aed9aa39eb64d5",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://7f547e2d558c3ae94920fd57bfe4be5ee12da575f3e1a5dd9dd1ad3530910dda",
+				"dweb:/ipfs/Qmf7pzWms5TCdJykzqtx91XpU7K5JaBWid6LeaPtU3kZjS"
+			]
+		}
+	},
+	"version": 1
+}

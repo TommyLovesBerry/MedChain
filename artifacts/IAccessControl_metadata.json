@@ -1,0 +1,70 @@
+{
+	"compiler": {
+		"version": "0.8.30+commit.73712a01"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "patient",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "provider",
+						"type": "address"
+					}
+				],
+				"name": "checkAccess",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/RecordManager.sol": "IAccessControl"
+		},
+		"evmVersion": "prague",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/RecordManager.sol": {
+			"keccak256": "0xf6bee102649cb89e47b3c6dbd050989215cfb4751d4b4e04fff2804c18ee994e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://e16e32daba4d49275469538eafac7e85e508aa330a8955be6e210e187f630610",
+				"dweb:/ipfs/QmautZTd2CeGKwhtm9sVsq1ByQFZzeTzzsL9kBayDUzT5w"
+			]
+		}
+	},
+	"version": 1
+}
