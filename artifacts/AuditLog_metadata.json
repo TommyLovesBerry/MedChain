@@ -20,7 +20,7 @@
 						"type": "address"
 					}
 				],
-				"name": "AuthorizedCallerAdded",
+				"name": "AuthorisedCallerAdded",
 				"type": "event"
 			},
 			{
@@ -33,7 +33,7 @@
 						"type": "address"
 					}
 				],
-				"name": "AuthorizedCallerRemoved",
+				"name": "AuthorisedCallerRemoved",
 				"type": "event"
 			},
 			{
@@ -59,6 +59,12 @@
 					},
 					{
 						"indexed": false,
+						"internalType": "address",
+						"name": "counterparty",
+						"type": "address"
+					},
+					{
+						"indexed": false,
 						"internalType": "string",
 						"name": "action",
 						"type": "string"
@@ -74,6 +80,38 @@
 				"type": "event"
 			},
 			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "from",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					}
+				],
+				"name": "OwnershipTransferred",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "caller",
+						"type": "address"
+					}
+				],
+				"name": "authorise",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"inputs": [
 					{
 						"internalType": "address",
@@ -81,7 +119,7 @@
 						"type": "address"
 					}
 				],
-				"name": "authorizedCallers",
+				"name": "authorisedCallers",
 				"outputs": [
 					{
 						"internalType": "bool",
@@ -90,6 +128,106 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "caller",
+						"type": "address"
+					}
+				],
+				"name": "deauthorise",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getLogCount",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "subject",
+						"type": "address"
+					}
+				],
+				"name": "getLogsForSubject",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "address",
+								"name": "actor",
+								"type": "address"
+							},
+							{
+								"internalType": "address",
+								"name": "subject",
+								"type": "address"
+							},
+							{
+								"internalType": "address",
+								"name": "counterparty",
+								"type": "address"
+							},
+							{
+								"internalType": "string",
+								"name": "action",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct AuditLog.LogEntry[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "actor",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "subject",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "counterparty",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "action",
+						"type": "string"
+					}
+				],
+				"name": "logEvent",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -103,6 +241,19 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "transferOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			}
 		],
@@ -134,11 +285,11 @@
 	},
 	"sources": {
 		"contracts/AuditLog.sol": {
-			"keccak256": "0x7f68de8c174320931ff4ef9e24329ea3c74af5c12f2674eb8c277d169c4c1da3",
+			"keccak256": "0x2472fc11d9f9fa78f3757407c78520fc7f773c24f3c26501c3ac88d3deb4de8d",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://e76e39d2fe31b3a3fe999f9fc46d01157625f961ba317f0c8691f20ec26440e2",
-				"dweb:/ipfs/QmXG2Zg92YSoCXtsaVFdAQXhBweucqvcDyZL48y9YTZwX7"
+				"bzz-raw://302da7ac5e277f3aa47b6b0f113ecda4b7d7de552589c487c9e7a6efabcd81e6",
+				"dweb:/ipfs/QmcEgzLcg3feyWQokZKBhXpRUZV6oC51NiKMiHwABg6mqd"
 			]
 		}
 	},

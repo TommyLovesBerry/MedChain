@@ -10,7 +10,7 @@ interface IProviderRegistry {
 }
 
 interface IAuditLog {
-    function logEvent(address actor, address subject, address relatedParty, string calldata action) external;
+    function logEvent(address actor, address subject, address counterparty, string calldata action) external;
 }
 
 contract AccessControl {

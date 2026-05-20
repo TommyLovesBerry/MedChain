@@ -67,7 +67,7 @@
 				},
 				{
 					"internalType": "address",
-					"name": "relatedParty",
+					"name": "counterparty",
 					"type": "address"
 				},
 				{
