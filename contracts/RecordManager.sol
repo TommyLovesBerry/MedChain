@@ -6,7 +6,7 @@ interface IAccessControl {
 }
 
 interface IAuditLogRM {
-    function logEvent(address actor, address subject, string calldata action) external;
+    function logEvent(address actor, address subject, address counterparty, string calldata action) external;
 }
 
 contract RecordManager {

@@ -4,7 +4,108 @@
 	},
 	"language": "Solidity",
 	"output": {
-		"abi": [],
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "patient",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "PatientRegistered",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "addr",
+						"type": "address"
+					}
+				],
+				"name": "getPatient",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "address",
+								"name": "wallet",
+								"type": "address"
+							},
+							{
+								"internalType": "string",
+								"name": "publicKey",
+								"type": "string"
+							},
+							{
+								"internalType": "bool",
+								"name": "exists",
+								"type": "bool"
+							}
+						],
+						"internalType": "struct PatientRegistry.Patient",
+						"name": "",
+						"type": "tuple"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "addr",
+						"type": "address"
+					}
+				],
+				"name": "isPatient",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "patientCount",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "publicKey",
+						"type": "string"
+					}
+				],
+				"name": "registerPatient",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
 		"devdoc": {
 			"kind": "dev",
 			"methods": {},
@@ -33,11 +134,11 @@
 	},
 	"sources": {
 		"contracts/PatientRegistry.sol": {
-			"keccak256": "0x11c49dd47d24a9dcc64631e97e7a7b2e1090a080ae8ceffdc8aed9aa39eb64d5",
+			"keccak256": "0x18b40ec248a3fc4d6b0a9d12f8be33cf4a86819ec5127f7e2ed9fd958109b099",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://7f547e2d558c3ae94920fd57bfe4be5ee12da575f3e1a5dd9dd1ad3530910dda",
-				"dweb:/ipfs/Qmf7pzWms5TCdJykzqtx91XpU7K5JaBWid6LeaPtU3kZjS"
+				"bzz-raw://89991e4251d08fe539b1f6b369bb4dcd231af48016253076b1d8b60350dfd5cd",
+				"dweb:/ipfs/QmY6cwvtWwdacJ52nVx7vqCX24ehKRKVcgSginiTNjoHr9"
 			]
 		}
 	},

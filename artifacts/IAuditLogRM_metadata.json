@@ -18,6 +18,11 @@
 						"type": "address"
 					},
 					{
+						"internalType": "address",
+						"name": "counterparty",
+						"type": "address"
+					},
+					{
 						"internalType": "string",
 						"name": "action",
 						"type": "string"
@@ -57,11 +62,11 @@
 	},
 	"sources": {
 		"contracts/RecordManager.sol": {
-			"keccak256": "0xf6bee102649cb89e47b3c6dbd050989215cfb4751d4b4e04fff2804c18ee994e",
+			"keccak256": "0x0cb0dff6d0e59cd1baeaba0cf5cad4ef27d50332f3e77c2310369b7b11956924",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://e16e32daba4d49275469538eafac7e85e508aa330a8955be6e210e187f630610",
-				"dweb:/ipfs/QmautZTd2CeGKwhtm9sVsq1ByQFZzeTzzsL9kBayDUzT5w"
+				"bzz-raw://121b8e73a4dbb2b849b4dc42ae8fd83ca5fce927f62e02c7d5a45acad1e16f01",
+				"dweb:/ipfs/Qmcqjvime3VxBUVrLwZrdV9BEyZdPEEPUWvRjeVxkaSZYL"
 			]
 		}
 	},
