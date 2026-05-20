@@ -49,7 +49,7 @@
 		},
 		"gasEstimates": null,
 		"methodIdentifiers": {
-			"logEvent(address,address,string)": "77f48461"
+			"logEvent(address,address,address,string)": "107d1d78"
 		}
 	},
 	"abi": [
@@ -63,6 +63,11 @@
 				{
 					"internalType": "address",
 					"name": "subject",
+					"type": "address"
+				},
+				{
+					"internalType": "address",
+					"name": "relatedParty",
 					"type": "address"
 				},
 				{

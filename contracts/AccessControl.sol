@@ -10,7 +10,7 @@ interface IProviderRegistry {
 }
 
 interface IAuditLog {
-    function logEvent(address actor, address subject, string calldata action) external;
+    function logEvent(address actor, address subject, address relatedParty, string calldata action) external;
 }
 
 contract AccessControl {
@@ -18,7 +18,7 @@ contract AccessControl {
     IProviderRegistry public providerRegistry;
     IAuditLog         public auditLog;
 
-    // patient => provider => granted?
+    // permissions mapping: patient => provider => granted?
     mapping(address => mapping(address => bool)) private permissions;
 
     event AccessGranted(address indexed patient, address indexed provider, uint256 timestamp);
@@ -33,7 +33,32 @@ contract AccessControl {
         auditLog         = IAuditLog(_auditLog);
     }
 
-    // TODO: functions
-    // grantAccess, revokeAccess, checkAccess
+
+    function grantAccess(address provider) external {
+        // require patient exists, provider is active, check if access is not already granted
+        require(patientRegistry.isPatient(msg.sender), "AccessControl: caller not a patient");
+        require(providerRegistry.isActiveProvider(provider), "AccessControl: provider not active");
+        require(!permissions[msg.sender][provider], "AccessControl: already granted");
+
+        permissions[msg.sender][provider] = true;
+
+        emit AccessGranted(msg.sender, provider, block.timestamp);
+        auditLog.logEvent(msg.sender, msg.sender, provider, "GRANT_ACCESS");
+    }
+
+    function revokeAccess(address provider) external {
+        // require patient exists and provider does not already have access
+        require(patientRegistry.isPatient(msg.sender), "AccessControl: caller not a patient");
+        require(permissions[msg.sender][provider], "AccessControl: no access to revoke");
+
+        permissions[msg.sender][provider] = false;
+
+        emit AccessRevoked(msg.sender, provider, block.timestamp);
+        auditLog.logEvent(msg.sender, msg.sender, provider, "REVOKE_ACCESS");
+    }
+
+    function checkAccess(address patient, address provider) external view returns(bool) {
+        return permissions[patient][provider];
+    }
 
 }

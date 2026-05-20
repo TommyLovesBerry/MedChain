@@ -90,6 +90,43 @@
 				"type": "function"
 			},
 			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "patient",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "provider",
+						"type": "address"
+					}
+				],
+				"name": "checkAccess",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "provider",
+						"type": "address"
+					}
+				],
+				"name": "grantAccess",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"inputs": [],
 				"name": "patientRegistry",
 				"outputs": [
@@ -113,6 +150,19 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "provider",
+						"type": "address"
+					}
+				],
+				"name": "revokeAccess",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			}
 		],
@@ -144,11 +194,11 @@
 	},
 	"sources": {
 		"contracts/AccessControl.sol": {
-			"keccak256": "0xe24f184fa99b4c1bcbc04ac9ab1e226f0621e275a6409fb6e6c89b3926317b02",
+			"keccak256": "0x3b526567570713987d5eec059fbe09b8673d0b236ce6235c0816ae42308ff07a",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://33b94485d7a630dc7933db3fadb654bed33aff84a4232c17abaced4cd5ba41c9",
-				"dweb:/ipfs/QmW1FKgP2ErBMQvwsx6nNMVaqT41s6DPUeqFzFwgQJKPbP"
+				"bzz-raw://c3567ad75704d4cd7553144803d553f3818b4916b17061ed5df2acf47e3df4eb",
+				"dweb:/ipfs/QmW38dhrZAEopL9kboWSecfPJaMPoaTodsEYVgCdn7xJa3"
 			]
 		}
 	},
