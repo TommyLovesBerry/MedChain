@@ -114,6 +114,24 @@ describe("ProviderRegistry", () => {
     await providerRegistry.connect(hospitalAdmin).revokeProvider(doctor.address);
     expect(await providerRegistry.isActiveProvider(doctor.address)).to.equal(false);
   });
+
+  it("allows re-onboarding a revoked provider without duplicating the directory", async () => {
+    const { providerRegistry, hospitalAdmin, doctor } = await loadFixture(deployFixture);
+    await providerRegistry.connect(hospitalAdmin).registerProvider(doctor.address, "Dr S");
+    await providerRegistry.connect(hospitalAdmin).revokeProvider(doctor.address);
+    await providerRegistry.connect(hospitalAdmin).registerProvider(doctor.address, "Dr S (returned)");
+    expect(await providerRegistry.isActiveProvider(doctor.address)).to.equal(true);
+    expect(await providerRegistry.providerCount()).to.equal(1n);
+    const p = await providerRegistry.getProvider(doctor.address);
+    expect(p.name).to.equal("Dr S (returned)");
+  });
+
+  it("rejects re-register when provider is currently active", async () => {
+    const { providerRegistry, hospitalAdmin, doctor } = await loadFixture(deployFixture);
+    await providerRegistry.connect(hospitalAdmin).registerProvider(doctor.address, "Dr S");
+    await expect(providerRegistry.connect(hospitalAdmin).registerProvider(doctor.address, "Dr X"))
+      .to.be.revertedWith("ProviderRegistry: already active");
+  });
 });
 
 describe("AccessControl", () => {

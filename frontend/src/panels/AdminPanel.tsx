@@ -66,27 +66,25 @@ export default function AdminPanel({ role, refreshKey, onChange, mmSigner, mmAdd
                   {registered && !active && <span className="warn">revoked</span>}
                 </td>
                 <td>
-                  {registered ? name : (
+                  {active ? name : (
                     <input
                       placeholder="Name"
-                      value={nameDraft[r] ?? ""}
+                      value={nameDraft[r] ?? name ?? ""}
                       onChange={(e) => setNameDraft({ ...nameDraft, [r]: e.target.value })}
                     />
                   )}
                 </td>
                 <td>
-                  {!registered ? (
-                    <button disabled={busy || !nameDraft[r]} onClick={() => withBusy(async () => {
-                      const tx = await c.providerRegistry.registerProvider(ROLES[r].address, nameDraft[r]);
-                      await tx.wait();
-                    })}>Onboard</button>
-                  ) : active ? (
+                  {active ? (
                     <button disabled={busy} onClick={() => withBusy(async () => {
                       const tx = await c.providerRegistry.revokeProvider(ROLES[r].address);
                       await tx.wait();
                     })}>Revoke</button>
                   ) : (
-                    <span className="muted">—</span>
+                    <button disabled={busy || !(nameDraft[r] ?? name)} onClick={() => withBusy(async () => {
+                      const tx = await c.providerRegistry.registerProvider(ROLES[r].address, nameDraft[r] ?? name);
+                      await tx.wait();
+                    })}>{registered ? "Re-onboard" : "Onboard"}</button>
                   )}
                 </td>
               </tr>

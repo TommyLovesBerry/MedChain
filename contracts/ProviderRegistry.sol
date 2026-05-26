@@ -36,10 +36,11 @@ contract ProviderRegistry {
 
     function registerProvider(address provider, string calldata name) external onlyAdmin {
         require(provider != address(0), "ProviderRegistry: zero provider");
-        require(providers[provider].wallet == address(0), "ProviderRegistry: already registered");
+        require(!providers[provider].active, "ProviderRegistry: already active");
 
+        bool isNew = providers[provider].wallet == address(0);
         providers[provider] = Provider({wallet: provider, name: name, active: true});
-        providerList.push(provider);
+        if (isNew) providerList.push(provider);
 
         emit ProviderRegistered(provider, name, block.timestamp);
         auditLog.logEvent(msg.sender, provider, provider, "REGISTER_PROVIDER");
