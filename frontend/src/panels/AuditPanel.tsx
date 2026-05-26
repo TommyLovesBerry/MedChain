@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
+import { Signer } from "ethers";
 import { contracts, RoleName, ROLES } from "../lib/chain";
 
-type Props = { role: RoleName; refreshKey: number };
+type Props = { role: RoleName; refreshKey: number; mmSigner?: Signer; mmAddress?: string };
 
-export default function AuditPanel({ role, refreshKey }: Props) {
+export default function AuditPanel({ role, refreshKey, mmSigner, mmAddress }: Props) {
   const [entries, setEntries] = useState<{ actor: string; counterparty: string; action: string; ts: number }[]>([]);
 
-  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [role, refreshKey]);
+  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [role, refreshKey, mmAddress]);
 
   async function load() {
     if (role === "HospitalAdmin") return;
-    const c = contracts(role);
+    const c = contracts(role, mmSigner, mmAddress);
     try {
       const logs = await c.auditLog.getLogsForSubject(c.me);
       setEntries(logs.map((l: any) => ({

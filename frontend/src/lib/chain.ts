@@ -1,10 +1,10 @@
-import { JsonRpcProvider, Wallet, Contract } from "ethers";
+import { JsonRpcProvider, Wallet, Contract, Signer } from "ethers";
 import addresses from "../contracts/addresses.json";
 import abis from "../contracts/abis.json";
 
 // Hardhat's default test mnemonic gives well-known accounts.
-// We use them directly (no MetaMask) for a frictionless live demo.
-// Account #0 = deployer, #1 = hospital admin. Patients/doctors get assigned below.
+// Demo mode uses these directly (no MetaMask) for a frictionless live walkthrough.
+// MetaMask mode (see App.tsx) overrides the signer per-action with the user's wallet.
 export const ROLES = {
   Deployer:      { idx: 0, address: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", pk: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" },
   HospitalAdmin: { idx: 1, address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", pk: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d" },
@@ -22,15 +22,28 @@ export function walletFor(role: RoleName) {
   return new Wallet(ROLES[role].pk, provider);
 }
 
-export function contracts(role: RoleName) {
-  const signer = walletFor(role);
+export type ChainCtx = {
+  auditLog: Contract;
+  patientRegistry: Contract;
+  providerRegistry: Contract;
+  accessControl: Contract;
+  recordManager: Contract;
+  me: string;
+};
+
+// `contracts(role)` uses the well-known Hardhat test key for that role (no MetaMask popup).
+// `contracts(role, mmSigner, mmAddress)` uses the MetaMask signer for writes (popup!) but
+// still binds the panel/view to `role` and shows the connected MetaMask address as `me`.
+export function contracts(role: RoleName, mmSigner?: Signer, mmAddress?: string): ChainCtx {
+  const signer: Signer = mmSigner ?? walletFor(role);
+  const me = mmAddress ?? (signer as Wallet).address;
   return {
     auditLog:         new Contract(addresses.AuditLog,         abis.AuditLog,         signer),
     patientRegistry:  new Contract(addresses.PatientRegistry,  abis.PatientRegistry,  signer),
     providerRegistry: new Contract(addresses.ProviderRegistry, abis.ProviderRegistry, signer),
     accessControl:    new Contract(addresses.AccessControl,    abis.AccessControl,    signer),
     recordManager:    new Contract(addresses.RecordManager,    abis.RecordManager,    signer),
-    me: signer.address,
+    me,
   };
 }
 

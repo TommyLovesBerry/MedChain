@@ -56,10 +56,32 @@ Deploys all 5 contracts, wires up the `AuditLog` authorisations, and writes
 ```bash
 npm run frontend
 ```
-Opens at <http://localhost:5173>. No MetaMask required — the app uses Hardhat's
-well-known test private keys directly so you can switch between Patient / Doctor /
-Hospital Admin roles with a single click. (This is a deliberate choice for live demo
-reliability — in a real deployment, each role would sign with their own wallet.)
+Opens at <http://localhost:5173>. The UI supports **two signing modes**:
+
+- **Demo accounts (default)** — one-click role switching backed by Hardhat's well-known
+  test keys. No browser extension required, no popups, instant signing. Ideal for the
+  live walkthrough.
+- **MetaMask** — click "🦊 Connect MetaMask" in the sidebar. Every write triggers a
+  MetaMask popup, exactly like a production dApp.
+
+### Using MetaMask (optional)
+
+1. Install the [MetaMask](https://metamask.io) browser extension.
+2. Click **Connect MetaMask** in the sidebar — the app will prompt MetaMask to add the
+   "Hardhat Localhost" network (chainId 31337, RPC `http://127.0.0.1:8545`) and switch to it.
+3. Import one or more of Hardhat's test accounts into MetaMask so you can act as different
+   roles. In MetaMask: *Account → Import account → Private key*, then paste one of:
+   - **Hospital admin** (account #1): `0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d`
+   - **Patient Alice**  (account #2): `0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a`
+   - **Doctor Bob**     (account #3): `0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6`
+4. Switch the active account in MetaMask to act as a different role. The app listens for
+   `accountsChanged` and refreshes automatically. The "View as" buttons in the sidebar
+   choose which panel (Patient / Doctor / Admin) is shown — make sure the active MetaMask
+   account matches the role you're trying to use.
+
+These private keys are public — they come from Hardhat's default test mnemonic
+(`test test test test test test test test test test test junk`) and are safe to commit.
+**Never** use them on mainnet or any network handling real value.
 
 ## Tests
 

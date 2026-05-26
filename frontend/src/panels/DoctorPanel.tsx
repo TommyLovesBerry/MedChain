@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
+import { Signer } from "ethers";
 import { contracts, RoleName, ROLES } from "../lib/chain";
 
-type Props = { role: RoleName; refreshKey: number; onChange: () => void };
+type Props = {
+  role: RoleName;
+  refreshKey: number;
+  onChange: () => void;
+  mmSigner?: Signer;
+  mmAddress?: string;
+};
 const KNOWN_PATIENTS: RoleName[] = ["PatientAlice", "PatientCarol"];
 
-export default function DoctorPanel({ role, refreshKey, onChange }: Props) {
+export default function DoctorPanel({ role, refreshKey, onChange, mmSigner, mmAddress }: Props) {
   const [isActive, setIsActive] = useState<boolean | null>(null);
   const [providerName, setProviderName] = useState<string>("");
   const [accessFor, setAccessFor] = useState<Record<string, boolean>>({});
@@ -17,7 +24,7 @@ export default function DoctorPanel({ role, refreshKey, onChange }: Props) {
 
   async function load() {
     setErr(null);
-    const c = contracts(role);
+    const c = contracts(role, mmSigner, mmAddress);
     try {
       const active = await c.providerRegistry.isActiveProvider(c.me);
       setIsActive(active);
@@ -50,7 +57,7 @@ export default function DoctorPanel({ role, refreshKey, onChange }: Props) {
     finally { setBusy(false); }
   }
 
-  const c = contracts(role);
+  const c = contracts(role, mmSigner, mmAddress);
 
   return (
     <div className="panel">

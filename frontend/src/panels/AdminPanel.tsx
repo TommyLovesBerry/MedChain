@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
+import { Signer } from "ethers";
 import { contracts, RoleName, ROLES } from "../lib/chain";
 
-type Props = { role: RoleName; refreshKey: number; onChange: () => void };
+type Props = {
+  role: RoleName;
+  refreshKey: number;
+  onChange: () => void;
+  mmSigner?: Signer;
+  mmAddress?: string;
+};
 const CANDIDATES: RoleName[] = ["DoctorBob", "DoctorDave"];
 
-export default function AdminPanel({ role, refreshKey, onChange }: Props) {
+export default function AdminPanel({ role, refreshKey, onChange, mmSigner, mmAddress }: Props) {
   const [rows, setRows] = useState<{ r: RoleName; registered: boolean; active: boolean; name: string }[]>([]);
   const [nameDraft, setNameDraft] = useState<Record<string, string>>({ DoctorBob: "Dr Bob Smith", DoctorDave: "Dr Dave Jones" });
   const [busy, setBusy] = useState(false);
@@ -14,7 +21,7 @@ export default function AdminPanel({ role, refreshKey, onChange }: Props) {
 
   async function load() {
     setErr(null);
-    const c = contracts(role);
+    const c = contracts(role, mmSigner, mmAddress);
     try {
       const next = [];
       for (const r of CANDIDATES) {
@@ -39,7 +46,7 @@ export default function AdminPanel({ role, refreshKey, onChange }: Props) {
     finally { setBusy(false); }
   }
 
-  const c = contracts(role);
+  const c = contracts(role, mmSigner, mmAddress);
 
   return (
     <div className="panel">
@@ -90,7 +97,7 @@ export default function AdminPanel({ role, refreshKey, onChange }: Props) {
 
       <section className="card">
         <h3>Compliance — global audit log</h3>
-        <AdminAuditLog refreshKey={refreshKey} role={role} />
+        <AdminAuditLog refreshKey={refreshKey} role={role} mmSigner={mmSigner} mmAddress={mmAddress} />
       </section>
 
       {err && <div className="err">⚠ {err}</div>}
@@ -98,15 +105,15 @@ export default function AdminPanel({ role, refreshKey, onChange }: Props) {
   );
 }
 
-function AdminAuditLog({ refreshKey, role }: { refreshKey: number; role: RoleName }) {
+function AdminAuditLog({ refreshKey, role, mmSigner, mmAddress }: { refreshKey: number; role: RoleName; mmSigner?: Signer; mmAddress?: string }) {
   const [count, setCount] = useState<number>(0);
   useEffect(() => {
     (async () => {
-      const c = contracts(role);
+      const c = contracts(role, mmSigner, mmAddress);
       const n = await c.auditLog.getLogCount();
       setCount(Number(n));
     })();
-  }, [refreshKey, role]);
+  }, [refreshKey, role, mmSigner, mmAddress]);
   return (
     <p className="hint">
       Total events logged across the system: <b>{count}</b>. Admin cannot read patient record contents — only event metadata.
