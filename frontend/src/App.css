@@ -1,0 +1,72 @@
+:root {
+  --bg: #0a1626;
+  --panel: #11203a;
+  --panel-2: #16294a;
+  --border: #1f3c66;
+  --text: #e8edf5;
+  --muted: #7a8aa8;
+  --teal: #2dd4bf;
+  --teal-dark: #0f766e;
+  --warn: #f59e0b;
+  --err: #ef4444;
+  --ok: #34d399;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 14px; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #aac6f0; }
+button { background: var(--teal); color: #062021; border: 0; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+button:hover { background: #5eead4; }
+button:disabled { background: #2b3a52; color: var(--muted); cursor: not-allowed; }
+input { background: #0a1626; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+input:focus { outline: none; border-color: var(--teal); }
+
+.app { display: grid; grid-template-columns: 280px 1fr; height: 100vh; }
+
+.sidebar { background: var(--panel); border-right: 1px solid var(--border); padding: 18px; overflow-y: auto; }
+.sidebar h1 { margin: 0 0 4px; font-size: 22px; color: var(--teal); }
+.sidebar h3 { margin: 22px 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.tag { margin: 0 0 8px; color: var(--muted); font-size: 11px; }
+.role-group { margin-bottom: 10px; }
+.role-group-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 6px 0 4px; }
+.role-btn { width: 100%; text-align: left; background: var(--panel-2); color: var(--text); border: 1px solid var(--border); padding: 8px 10px; border-radius: 6px; display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+.role-btn:hover { border-color: var(--teal); background: #1a3057; }
+.role-btn.active { background: #14513b; border-color: var(--teal); }
+.role-name { font-weight: 600; font-size: 13px; color: var(--text); }
+.role-addr { font-family: ui-monospace, monospace; font-size: 10.5px; color: var(--muted); }
+
+.addresses { margin-top: 24px; font-size: 11px; color: var(--muted); }
+.addresses ul { padding-left: 0; list-style: none; }
+.addresses li { margin-bottom: 8px; }
+.addresses code { font-size: 10.5px; word-break: break-all; }
+
+.main { padding: 24px 32px; overflow-y: auto; }
+.header { border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 18px; }
+.header h2 { margin: 0; font-size: 20px; }
+.addr-pill { display: inline-block; background: var(--panel-2); border: 1px solid var(--border); padding: 2px 8px; border-radius: 999px; margin-left: 8px; font-family: ui-monospace, monospace; font-size: 11px; font-weight: normal; color: var(--muted); }
+
+.panel { display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+.card h3 { margin: 0 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--teal); }
+.card.audit { margin-top: 20px; }
+.hint { color: var(--muted); margin: 0 0 12px; font-size: 12.5px; }
+
+.ok { color: var(--ok); font-weight: 600; }
+.warn { color: var(--warn); font-weight: 600; }
+.muted { color: var(--muted); }
+.err { background: #3b0d0d; border: 1px solid var(--err); padding: 10px 14px; border-radius: 8px; color: #fecaca; font-size: 13px; }
+
+table.perms, table.records { width: 100%; border-collapse: collapse; font-size: 13px; }
+.perms th, .records th { text-align: left; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.perms td, .records td { padding: 8px; border-bottom: 1px solid #15243f; vertical-align: middle; }
+
+.upload-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.upload-row input { flex: 1; }
+
+.action { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--panel-2); color: var(--muted); }
+.action.GRANT_ACCESS { background: #14513b; color: var(--ok); }
+.action.REVOKE_ACCESS { background: #532017; color: #fca5a5; }
+.action.UPLOAD_RECORD { background: #1e3a5f; color: #93c5fd; }
+.action.UPDATE_RECORD { background: #1e3a5f; color: #93c5fd; }
+.action.REGISTER_PROVIDER { background: #3b2a55; color: #c4b5fd; }
+.action.REVOKE_PROVIDER { background: #532017; color: #fca5a5; }

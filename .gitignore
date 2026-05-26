@@ -1,0 +1,14 @@
+node_modules/
+cache/
+artifacts-hh/
+dist/
+.env
+.DS_Store
+
+# frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# generated typechain output
+typechain-types/
