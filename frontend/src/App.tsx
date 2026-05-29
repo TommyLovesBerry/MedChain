@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { ROLES, RoleName, addresses } from "./lib/chain";
+import { useEffect, useMemo, useState } from "react";
+import { ROLES, Identity, addresses, pkForAddress } from "./lib/chain";
+import { getDoctors, getPatients } from "./lib/directory";
 import { connectMetaMask, hasMetaMask, onAccountsChanged, onChainChanged } from "./lib/metamask";
 import type { Signer } from "ethers";
 import PatientPanel from "./panels/PatientPanel";
@@ -7,16 +8,39 @@ import DoctorPanel from "./panels/DoctorPanel";
 import AdminPanel from "./panels/AdminPanel";
 import AuditPanel from "./panels/AuditPanel";
 
-const ROLE_GROUPS: { label: string; roles: RoleName[] }[] = [
-  { label: "Hospital admin", roles: ["HospitalAdmin"] },
-  { label: "Patients",       roles: ["PatientAlice", "PatientCarol"] },
-  { label: "Doctors",        roles: ["DoctorBob", "DoctorDave"] },
-];
+const ADMIN: Identity = {
+  key: ROLES.HospitalAdmin.address,
+  label: "HospitalAdmin",
+  address: ROLES.HospitalAdmin.address,
+  pk: ROLES.HospitalAdmin.pk,
+  kind: "admin",
+};
+
+function buildGroups(): { label: string; members: Identity[] }[] {
+  const mk = (kind: Identity["kind"]) => (m: { address: string; label: string }): Identity => ({
+    key: m.address,
+    label: m.label,
+    address: m.address,
+    pk: pkForAddress(m.address),
+    kind,
+  });
+  return [
+    { label: "Hospital admin", members: [ADMIN] },
+    { label: "Patients", members: getPatients().map(mk("patient")) },
+    { label: "Doctors", members: getDoctors().map(mk("doctor")) },
+  ];
+}
 
 export default function App() {
-  const [role, setRole] = useState<RoleName>("PatientAlice");
   const [refreshKey, setRefreshKey] = useState(0);
   const refresh = () => setRefreshKey((k) => k + 1);
+
+  // Rebuild the directory-driven sidebar whenever something changes on-chain/in storage.
+  const groups = useMemo(() => buildGroups(), [refreshKey]);
+  const allMembers = useMemo(() => groups.flatMap((g) => g.members), [groups]);
+
+  const [selectedKey, setSelectedKey] = useState<string>(ROLES.PatientAlice.address);
+  const who = allMembers.find((m) => m.key === selectedKey) ?? ADMIN;
 
   // MetaMask state
   const [mmSigner, setMmSigner] = useState<Signer | undefined>();
@@ -51,13 +75,14 @@ export default function App() {
   }
 
   const panel = (() => {
-    const props = { role, refreshKey, onChange: refresh, mmSigner, mmAddress };
-    if (role === "HospitalAdmin") return <AdminPanel {...props} />;
-    if (role.startsWith("Doctor")) return <DoctorPanel {...props} />;
+    const props = { who, refreshKey, onChange: refresh, mmSigner, mmAddress };
+    if (who.kind === "admin") return <AdminPanel {...props} />;
+    if (who.kind === "doctor") return <DoctorPanel {...props} />;
     return <PatientPanel {...props} />;
   })();
 
-  const activeAddress = useMm ? mmAddress! : ROLES[role].address;
+  const activeAddress = useMm ? mmAddress! : who.address;
+  const needsMetaMask = !useMm && !who.pk;
 
   return (
     <div className="app">
@@ -86,21 +111,23 @@ export default function App() {
         {mmErr && <p className="err small">⚠ {mmErr}</p>}
 
         <h3>{useMm ? "View as" : "Sign in as"}</h3>
-        {ROLE_GROUPS.map((g) => (
+        {groups.map((g) => (
           <div key={g.label} className="role-group">
             <div className="role-group-label">{g.label}</div>
-            {g.roles.map((r) => (
+            {g.members.map((m) => (
               <button
-                key={r}
-                className={`role-btn ${role === r ? "active" : ""}`}
-                onClick={() => setRole(r)}
+                key={m.key}
+                className={`role-btn ${who.key === m.key ? "active" : ""}`}
+                onClick={() => setSelectedKey(m.key)}
+                title={!m.pk ? "Added by address — connect this account in MetaMask to sign as it" : undefined}
               >
-                <span className="role-name">{r}</span>
-                <span className="role-addr">{ROLES[r].address.slice(0, 6)}…{ROLES[r].address.slice(-4)}</span>
+                <span className="role-name">{m.label}{!m.pk ? " 🦊" : ""}</span>
+                <span className="role-addr">{m.address.slice(0, 6)}…{m.address.slice(-4)}</span>
               </button>
             ))}
           </div>
         ))}
+        <p className="hint small">🦊 = added by address; connect that account in MetaMask to sign as it.</p>
 
         <details className="addresses">
           <summary>Deployed contracts</summary>
@@ -117,7 +144,7 @@ export default function App() {
       <main className="main">
         <div className="header">
           <h2>
-            {role}{" "}
+            {who.label}{" "}
             <span className="addr-pill">
               {useMm ? "🦊 " : ""}{activeAddress.slice(0, 6)}…{activeAddress.slice(-4)}
             </span>
@@ -125,13 +152,19 @@ export default function App() {
           {useMm && (
             <p className="hint">
               Transactions will be signed by your MetaMask account.
-              Panel view shows what <b>{role}</b> would do — check that your connected MetaMask address matches the role you want to act as.
+              Panel view shows what <b>{who.label}</b> would do — check that your connected MetaMask address matches the role you want to act as.
+            </p>
+          )}
+          {needsMetaMask && (
+            <p className="warn">
+              <b>{who.label}</b> was added by address and has no demo key. Connect this account in
+              MetaMask (or onboard a built-in demo account instead) to sign transactions as it.
             </p>
           )}
         </div>
         {panel}
-        {role !== "HospitalAdmin" && (
-          <AuditPanel role={role} refreshKey={refreshKey} mmSigner={mmSigner} mmAddress={mmAddress} />
+        {who.kind !== "admin" && (
+          <AuditPanel who={who} refreshKey={refreshKey} mmSigner={mmSigner} mmAddress={mmAddress} />
         )}
       </main>
     </div>

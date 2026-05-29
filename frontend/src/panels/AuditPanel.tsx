@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { Signer } from "ethers";
-import { contracts, RoleName, ROLES } from "../lib/chain";
+import { contracts, Identity, ROLES } from "../lib/chain";
+import { getDoctors, getPatients } from "../lib/directory";
 
-type Props = { role: RoleName; refreshKey: number; mmSigner?: Signer; mmAddress?: string };
+type Props = { who: Identity; refreshKey: number; mmSigner?: Signer; mmAddress?: string };
 
-export default function AuditPanel({ role, refreshKey, mmSigner, mmAddress }: Props) {
+export default function AuditPanel({ who, refreshKey, mmSigner, mmAddress }: Props) {
   const [entries, setEntries] = useState<{ actor: string; counterparty: string; action: string; ts: number }[]>([]);
 
-  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [role, refreshKey, mmAddress]);
+  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [who.key, refreshKey, mmAddress]);
 
   async function load() {
-    if (role === "HospitalAdmin") return;
-    const c = contracts(role, mmSigner, mmAddress);
+    if (who.kind === "admin") return;
+    const c = contracts(who, mmSigner, mmAddress);
     try {
       const logs = await c.auditLog.getLogsForSubject(c.me);
       setEntries(logs.map((l: any) => ({
@@ -22,9 +23,10 @@ export default function AuditPanel({ role, refreshKey, mmSigner, mmAddress }: Pr
     }
   }
 
-  const knownAddr: Record<string, string> = Object.fromEntries(
-    Object.entries(ROLES).map(([k, v]) => [v.address.toLowerCase(), k])
-  );
+  const knownAddr: Record<string, string> = {
+    ...Object.fromEntries(Object.entries(ROLES).map(([k, v]) => [v.address.toLowerCase(), k])),
+    ...Object.fromEntries([...getDoctors(), ...getPatients()].map((m) => [m.address.toLowerCase(), m.label])),
+  };
   const label = (a: string) => knownAddr[a.toLowerCase()] ?? `${a.slice(0,6)}…${a.slice(-4)}`;
 
   return (

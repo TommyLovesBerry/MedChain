@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import { Signer } from "ethers";
-import { contracts, RoleName, ROLES } from "../lib/chain";
+import { contracts, Identity } from "../lib/chain";
+import { getPatients, Member } from "../lib/directory";
 import { encryptAndUpload } from "../lib/ipfs";
 
 type Props = {
-  role: RoleName;
+  who: Identity;
   refreshKey: number;
   onChange: () => void;
   mmSigner?: Signer;
   mmAddress?: string;
 };
-const KNOWN_PATIENTS: RoleName[] = ["PatientAlice", "PatientCarol"];
 
-export default function DoctorPanel({ role, refreshKey, onChange, mmSigner, mmAddress }: Props) {
+export default function DoctorPanel({ who, refreshKey, onChange, mmSigner, mmAddress }: Props) {
   const [isActive, setIsActive] = useState<boolean | null>(null);
   const [providerName, setProviderName] = useState<string>("");
+  const [patients, setPatients] = useState<Member[]>([]);
   const [accessFor, setAccessFor] = useState<Record<string, boolean>>({});
   const [recordsByPatient, setRecordsByPatient] = useState<Record<string, any[]>>({});
   const [cidDraft, setCidDraft] = useState<Record<string, string>>({});
@@ -23,11 +24,13 @@ export default function DoctorPanel({ role, refreshKey, onChange, mmSigner, mmAd
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [role, refreshKey]);
+  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [who.key, refreshKey]);
 
   async function load() {
     setErr(null);
-    const c = contracts(role, mmSigner, mmAddress);
+    const c = contracts(who, mmSigner, mmAddress);
+    const pts = getPatients();
+    setPatients(pts);
     try {
       const active = await c.providerRegistry.isActiveProvider(c.me);
       setIsActive(active);
@@ -37,13 +40,12 @@ export default function DoctorPanel({ role, refreshKey, onChange, mmSigner, mmAd
       }
       const map: Record<string, boolean> = {};
       const records: Record<string, any[]> = {};
-      for (const pr of KNOWN_PATIENTS) {
-        const addr = ROLES[pr].address;
-        const has = await c.accessControl.checkAccess(addr, c.me);
-        map[pr] = has;
+      for (const pr of pts) {
+        const has = await c.accessControl.checkAccess(pr.address, c.me);
+        map[pr.address] = has;
         if (has) {
-          const ids: bigint[] = await c.recordManager.getRecordIdsForPatient(addr);
-          records[pr] = await Promise.all(ids.map(async (id) => {
+          const ids: bigint[] = await c.recordManager.getRecordIdsForPatient(pr.address);
+          records[pr.address] = await Promise.all(ids.map(async (id) => {
             const r = await c.recordManager.getRecord(id);
             return { id: Number(id), cid: r.cid, ts: Number(r.timestamp), superseded: r.superseded, prev: Number(r.previousVersion) };
           }));
@@ -60,18 +62,18 @@ export default function DoctorPanel({ role, refreshKey, onChange, mmSigner, mmAd
     finally { setBusy(false); }
   }
 
-  async function onSelectFile(pr: RoleName, file: File) {
+  async function onSelectFile(pr: Member, file: File) {
     await withBusy(async () => {
-      setUploadStatus({ ...uploadStatus, [pr]: `Encrypting & uploading "${file.name}"…` });
+      setUploadStatus({ ...uploadStatus, [pr.address]: `Encrypting & uploading "${file.name}"…` });
       const { cid, keyB64 } = await encryptAndUpload(file);
-      const tx = await c.recordManager.uploadRecord(ROLES[pr].address, cid);
+      const tx = await c.recordManager.uploadRecord(pr.address, cid);
       await tx.wait();
       setKeyByCid((m) => ({ ...m, [cid]: keyB64 }));
     });
-    setUploadStatus((m) => ({ ...m, [pr]: "" }));
+    setUploadStatus((m) => ({ ...m, [pr.address]: "" }));
   }
 
-  const c = contracts(role, mmSigner, mmAddress);
+  const c = contracts(who, mmSigner, mmAddress);
 
   return (
     <div className="panel">
@@ -84,10 +86,10 @@ export default function DoctorPanel({ role, refreshKey, onChange, mmSigner, mmAd
         )}
       </section>
 
-      {KNOWN_PATIENTS.map((pr) => (
-        <section className="card" key={pr}>
-          <h3>{pr} <span className="addr-pill">{ROLES[pr].address.slice(0,6)}…{ROLES[pr].address.slice(-4)}</span></h3>
-          {!accessFor[pr] ? (
+      {patients.map((pr) => (
+        <section className="card" key={pr.address}>
+          <h3>{pr.label} <span className="addr-pill">{pr.address.slice(0,6)}…{pr.address.slice(-4)}</span></h3>
+          {!accessFor[pr.address] ? (
             <p className="muted">No access. Patient must grant you permission first.</p>
           ) : (
             <>
@@ -105,30 +107,30 @@ export default function DoctorPanel({ role, refreshKey, onChange, mmSigner, mmAd
                   Encrypt &amp; upload file to IPFS
                 </label>
               </div>
-              {uploadStatus[pr] && <p className="muted">{uploadStatus[pr]}</p>}
+              {uploadStatus[pr.address] && <p className="muted">{uploadStatus[pr.address]}</p>}
 
               <div className="upload-row">
                 <input
                   placeholder="QmCid…   (paste an existing IPFS hash)"
-                  value={cidDraft[pr] ?? ""}
-                  onChange={(e) => setCidDraft({ ...cidDraft, [pr]: e.target.value })}
+                  value={cidDraft[pr.address] ?? ""}
+                  onChange={(e) => setCidDraft({ ...cidDraft, [pr.address]: e.target.value })}
                 />
                 <button
-                  disabled={busy || !isActive || !(cidDraft[pr] || "").trim()}
+                  disabled={busy || !isActive || !(cidDraft[pr.address] || "").trim()}
                   onClick={() => withBusy(async () => {
-                    const tx = await c.recordManager.uploadRecord(ROLES[pr].address, cidDraft[pr].trim());
+                    const tx = await c.recordManager.uploadRecord(pr.address, cidDraft[pr.address].trim());
                     await tx.wait();
-                    setCidDraft({ ...cidDraft, [pr]: "" });
+                    setCidDraft({ ...cidDraft, [pr.address]: "" });
                   })}
                 >Upload new record</button>
               </div>
-              {(recordsByPatient[pr] ?? []).length === 0 ? (
+              {(recordsByPatient[pr.address] ?? []).length === 0 ? (
                 <p className="muted">No records yet.</p>
               ) : (
                 <table className="records">
                   <thead><tr><th>#</th><th>CID</th><th>Prev</th><th>When</th><th>Status</th><th></th></tr></thead>
                   <tbody>
-                    {recordsByPatient[pr].map((r) => (
+                    {recordsByPatient[pr.address].map((r) => (
                       <tr key={r.id}>
                         <td>{r.id}</td>
                         <td>

@@ -64,6 +64,39 @@ Opens at <http://localhost:5173>. The UI supports **two signing modes**:
 - **MetaMask** — click "🦊 Connect MetaMask" in the sidebar. Every write triggers a
   MetaMask popup, exactly like a production dApp.
 
+### Adding more doctors and patients
+
+The sidebar ships with several built-in demo doctors and patients, but you can add more
+at runtime from the **Hospital Admin** panel:
+
+- **Onboard a new provider by address** — paste any address + name. This is a real
+  on-chain `registerProvider` call, so the new doctor becomes an active provider immediately.
+- **Add a patient by address** — adds the patient to the directory so providers can see and
+  request access to them. (Patients self-register on-chain from their own wallet — by design,
+  the contract only lets a patient register themselves.)
+
+Added members appear as their own sidebar tab. If the address is one of Hardhat's 20
+well-known accounts, the app already knows its key and the tab **instant-signs** with no
+MetaMask popup. Any other address is marked with a 🦊 and must be driven via MetaMask.
+The directory is stored in the browser's `localStorage`, so added tabs persist across
+reloads on the same machine (on-chain registrations live on the node).
+
+### Encrypted files (optional, real IPFS)
+
+Providers can encrypt and upload an actual file (not just a mock CID). Set a
+[Pinata](https://pinata.cloud) JWT in `frontend/.env` (see `frontend/.env.example`):
+
+```
+VITE_PINATA_JWT=your_pinata_jwt
+```
+
+On upload, the file is encrypted in the browser with **AES-GCM**; only the encrypted blob
+is pinned to IPFS and only the CID goes on-chain. The original filename + type are sealed
+inside the encrypted envelope. The provider is shown a one-time base64 decrypt key to share
+with the patient. The patient pastes that key next to the record and clicks **Download** to
+fetch, decrypt, and save the file under its original name — entirely client-side. Without a
+Pinata JWT the file-upload button is disabled, but the mock-CID flow still works.
+
 ### Using MetaMask (optional)
 
 1. Install the [MetaMask](https://metamask.io) browser extension.
@@ -106,11 +139,19 @@ This mirrors the BPMN diagram on slide 5 of the progress presentation.
 7. **PatientAlice** — click **Revoke** for DoctorBob. Switch back to **DoctorBob** — uploads now fail with `RecordManager: no access`. Audit log shows the revoke.
 8. **Hospital Admin** — note total event count; admin cannot read record contents, only metadata.
 
+Optional extras to show the newer features:
+
+- **Add more staff** — as Hospital Admin, onboard a new doctor by address (e.g. a free Hardhat
+  account) and add a new patient by address. Both appear as new sidebar tabs you can act as.
+- **Real encrypted file** — with a Pinata JWT set, the doctor clicks **Encrypt & upload file to
+  IPFS**, copies the shown decrypt key; the patient pastes that key on the record and clicks
+  **Download** to recover the original file, decrypted in the browser.
+
 ## Design notes
 
 | Concern | Approach |
 |---|---|
-| **Privacy** | Records are encrypted off-chain. Only the CID (32-byte hash) goes on-chain. Demo uses mock CIDs — see slide 6 for discussion of the IPFS pinning dependency. |
+| **Privacy** | Records are encrypted client-side with AES-GCM before upload; only the encrypted blob is pinned to IPFS and only the CID goes on-chain. The original filename + type are sealed inside the encrypted envelope. A mock-CID path is also available for offline demos. |
 | **Scalability / gas** | On-chain payload is fixed size regardless of record contents. Intended for a permissioned EVM (e.g. Hyperledger Besu); local Hardhat node here for demo. |
 | **Identity** | Hospital acts as registrar via `ProviderRegistry` (modelled on AHPRA). Patients self-register. |
 | **Audit** | Every write contract calls `AuditLog.logEvent()`. Only contracts authorised by the AuditLog owner can write — blocks spoofing. |
@@ -124,6 +165,10 @@ contracts/                   Solidity sources (5 contracts)
 test/                        Hardhat test suite (Mocha + chai)
 scripts/deploy.ts            Deploy + wire all contracts + emit addresses/ABIs
 frontend/                    Vite + React + ethers.js demo UI
+  src/lib/chain.ts           Contract wiring, demo accounts, identity model
+  src/lib/directory.ts       Runtime directory of doctors/patients (add-by-address)
+  src/lib/ipfs.ts            AES-GCM encrypt/decrypt + Pinata IPFS upload
+  src/panels/                Admin / Doctor / Patient / Audit panels
 artifacts-hh/                Hardhat-compiled artifacts (gitignored)
 artifacts/                   Legacy Remix artifacts (kept for reference only)
 hardhat.config.ts            Solidity 0.8.20, optimizer on, localhost net

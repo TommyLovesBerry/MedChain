@@ -1,35 +1,40 @@
 import { useEffect, useState } from "react";
 import { Signer } from "ethers";
-import { contracts, RoleName, ROLES } from "../lib/chain";
+import { contracts, Identity } from "../lib/chain";
+import { getDoctors, Member } from "../lib/directory";
+import { downloadAndDecrypt } from "../lib/ipfs";
 
 type Props = {
-  role: RoleName;
+  who: Identity;
   refreshKey: number;
   onChange: () => void;
   mmSigner?: Signer;
   mmAddress?: string;
 };
 
-const KNOWN_DOCTORS: RoleName[] = ["DoctorBob", "DoctorDave"];
-
-export default function PatientPanel({ role, refreshKey, onChange, mmSigner, mmAddress }: Props) {
+export default function PatientPanel({ who, refreshKey, onChange, mmSigner, mmAddress }: Props) {
   const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
+  const [doctors, setDoctors] = useState<Member[]>([]);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [records, setRecords] = useState<{ id: number; cid: string; provider: string; ts: number; superseded: boolean }[]>([]);
+  const [keyDraft, setKeyDraft] = useState<Record<number, string>>({});
+  const [decryptStatus, setDecryptStatus] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [role, refreshKey]);
+  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [who.key, refreshKey]);
 
   async function load() {
     setErr(null);
-    const c = contracts(role, mmSigner, mmAddress);
+    const c = contracts(who, mmSigner, mmAddress);
+    const docs = getDoctors();
+    setDoctors(docs);
     try {
       const reg = await c.patientRegistry.isPatient(c.me);
       setIsRegistered(reg);
       const perms: Record<string, boolean> = {};
-      for (const d of KNOWN_DOCTORS) {
-        perms[d] = await c.accessControl.checkAccess(c.me, ROLES[d].address);
+      for (const d of docs) {
+        perms[d.address] = await c.accessControl.checkAccess(c.me, d.address);
       }
       setPermissions(perms);
       if (reg) {
@@ -53,7 +58,30 @@ export default function PatientPanel({ role, refreshKey, onChange, mmSigner, mmA
     finally { setBusy(false); }
   }
 
-  const c = contracts(role, mmSigner, mmAddress);
+  async function onDownload(id: number, cid: string) {
+    const keyB64 = (keyDraft[id] ?? "").trim();
+    if (!keyB64) {
+      setDecryptStatus((m) => ({ ...m, [id]: "Paste the decrypt key first." }));
+      return;
+    }
+    setDecryptStatus((m) => ({ ...m, [id]: "Fetching & decrypting…" }));
+    try {
+      const { data, name, type, ext } = await downloadAndDecrypt(cid, keyB64);
+      const url = URL.createObjectURL(new Blob([data as BlobPart], { type }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name && name.trim() ? name : `medchain-record-${id}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setDecryptStatus((m) => ({ ...m, [id]: "✓ Decrypted & downloaded." }));
+    } catch (e: any) {
+      setDecryptStatus((m) => ({ ...m, [id]: `⚠ ${e.shortMessage ?? e.message}` }));
+    }
+  }
+
+  const c = contracts(who, mmSigner, mmAddress);
 
   return (
     <div className="panel">
@@ -65,7 +93,7 @@ export default function PatientPanel({ role, refreshKey, onChange, mmSigner, mmA
           <>
             <p className="warn">Not registered yet.</p>
             <button disabled={busy} onClick={() => withBusy(async () => {
-              const tx = await c.patientRegistry.registerPatient(`pubkey_${role}_demo`);
+              const tx = await c.patientRegistry.registerPatient(`pubkey_${who.label}_demo`);
               await tx.wait();
             })}>Register as patient</button>
           </>
@@ -78,19 +106,19 @@ export default function PatientPanel({ role, refreshKey, onChange, mmSigner, mmA
         <table className="perms">
           <thead><tr><th>Provider</th><th>Address</th><th>Access</th><th></th></tr></thead>
           <tbody>
-            {KNOWN_DOCTORS.map((d) => (
-              <tr key={d}>
-                <td>{d}</td>
-                <td><code>{ROLES[d].address.slice(0, 10)}…</code></td>
-                <td>{permissions[d] ? <span className="ok">granted</span> : <span className="muted">none</span>}</td>
+            {doctors.map((d) => (
+              <tr key={d.address}>
+                <td>{d.label}</td>
+                <td><code>{d.address.slice(0, 10)}…</code></td>
+                <td>{permissions[d.address] ? <span className="ok">granted</span> : <span className="muted">none</span>}</td>
                 <td>
-                  {permissions[d] ? (
+                  {permissions[d.address] ? (
                     <button disabled={busy || !isRegistered} onClick={() => withBusy(async () => {
-                      const tx = await c.accessControl.revokeAccess(ROLES[d].address); await tx.wait();
+                      const tx = await c.accessControl.revokeAccess(d.address); await tx.wait();
                     })}>Revoke</button>
                   ) : (
                     <button disabled={busy || !isRegistered} onClick={() => withBusy(async () => {
-                      const tx = await c.accessControl.grantAccess(ROLES[d].address); await tx.wait();
+                      const tx = await c.accessControl.grantAccess(d.address); await tx.wait();
                     })}>Grant</button>
                   )}
                 </td>
@@ -105,20 +133,40 @@ export default function PatientPanel({ role, refreshKey, onChange, mmSigner, mmA
         {records.length === 0 ? (
           <p className="muted">No records uploaded for you yet.</p>
         ) : (
-          <table className="records">
-            <thead><tr><th>#</th><th>CID</th><th>Uploaded by</th><th>When</th><th>Status</th></tr></thead>
-            <tbody>
-              {records.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.id}</td>
-                  <td><code>{r.cid}</code></td>
-                  <td><code>{r.provider.slice(0,10)}…</code></td>
-                  <td>{new Date(r.ts * 1000).toLocaleString()}</td>
-                  <td>{r.superseded ? <span className="muted">superseded</span> : <span className="ok">current</span>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <>
+            <p className="hint">
+              Records are AES-encrypted before upload. Paste the decrypt key your provider gave
+              you, then download &amp; decrypt the file in your browser.
+            </p>
+            <table className="records">
+              <thead><tr><th>#</th><th>CID</th><th>Uploaded by</th><th>When</th><th>Status</th><th>Decrypt &amp; download</th></tr></thead>
+              <tbody>
+                {records.map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.id}</td>
+                    <td><code>{r.cid}</code></td>
+                    <td><code>{r.provider.slice(0,10)}…</code></td>
+                    <td>{new Date(r.ts * 1000).toLocaleString()}</td>
+                    <td>{r.superseded ? <span className="muted">superseded</span> : <span className="ok">current</span>}</td>
+                    <td>
+                      <div className="upload-row">
+                        <input
+                          placeholder="paste decrypt key (base64)"
+                          value={keyDraft[r.id] ?? ""}
+                          onChange={(e) => setKeyDraft({ ...keyDraft, [r.id]: e.target.value })}
+                        />
+                        <button
+                          disabled={!(keyDraft[r.id] || "").trim()}
+                          onClick={() => onDownload(r.id, r.cid)}
+                        >Download</button>
+                      </div>
+                      {decryptStatus[r.id] && <div className="muted" style={{ marginTop: 4 }}>{decryptStatus[r.id]}</div>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </section>
 
