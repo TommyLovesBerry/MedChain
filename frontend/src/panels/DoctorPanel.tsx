@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Signer } from "ethers";
 import { contracts, RoleName, ROLES } from "../lib/chain";
+import { encryptAndUpload } from "../lib/ipfs";
 
 type Props = {
   role: RoleName;
@@ -17,6 +18,8 @@ export default function DoctorPanel({ role, refreshKey, onChange, mmSigner, mmAd
   const [accessFor, setAccessFor] = useState<Record<string, boolean>>({});
   const [recordsByPatient, setRecordsByPatient] = useState<Record<string, any[]>>({});
   const [cidDraft, setCidDraft] = useState<Record<string, string>>({});
+  const [keyByCid, setKeyByCid] = useState<Record<string, string>>({});
+  const [uploadStatus, setUploadStatus] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -57,6 +60,17 @@ export default function DoctorPanel({ role, refreshKey, onChange, mmSigner, mmAd
     finally { setBusy(false); }
   }
 
+  async function onSelectFile(pr: RoleName, file: File) {
+    await withBusy(async () => {
+      setUploadStatus({ ...uploadStatus, [pr]: `Encrypting & uploading "${file.name}"…` });
+      const { cid, keyB64 } = await encryptAndUpload(file);
+      const tx = await c.recordManager.uploadRecord(ROLES[pr].address, cid);
+      await tx.wait();
+      setKeyByCid((m) => ({ ...m, [cid]: keyB64 }));
+    });
+    setUploadStatus((m) => ({ ...m, [pr]: "" }));
+  }
+
   const c = contracts(role, mmSigner, mmAddress);
 
   return (
@@ -78,8 +92,24 @@ export default function DoctorPanel({ role, refreshKey, onChange, mmSigner, mmAd
           ) : (
             <>
               <div className="upload-row">
+                <label className="file-upload">
+                  <input
+                    type="file"
+                    disabled={busy || !isActive}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = ""; // allow re-selecting the same file
+                      if (f) void onSelectFile(pr, f);
+                    }}
+                  />
+                  Encrypt &amp; upload file to IPFS
+                </label>
+              </div>
+              {uploadStatus[pr] && <p className="muted">{uploadStatus[pr]}</p>}
+
+              <div className="upload-row">
                 <input
-                  placeholder="QmCid…   (mock IPFS hash)"
+                  placeholder="QmCid…   (paste an existing IPFS hash)"
                   value={cidDraft[pr] ?? ""}
                   onChange={(e) => setCidDraft({ ...cidDraft, [pr]: e.target.value })}
                 />
@@ -101,7 +131,14 @@ export default function DoctorPanel({ role, refreshKey, onChange, mmSigner, mmAd
                     {recordsByPatient[pr].map((r) => (
                       <tr key={r.id}>
                         <td>{r.id}</td>
-                        <td><code>{r.cid}</code></td>
+                        <td>
+                          <code>{r.cid}</code>
+                          {keyByCid[r.cid] && (
+                            <div className="muted" style={{ marginTop: 4 }}>
+                              decrypt key: <code>{keyByCid[r.cid]}</code> (save this — needed to decrypt)
+                            </div>
+                          )}
+                        </td>
                         <td>{r.prev > 0 ? `#${r.prev}` : "—"}</td>
                         <td>{new Date(r.ts * 1000).toLocaleString()}</td>
                         <td>{r.superseded ? <span className="muted">superseded</span> : <span className="ok">current</span>}</td>
